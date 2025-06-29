@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeyGen Video Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .video-container {
+            margin-top: 20px;
+        }
+        #videoPlayer {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            display: block;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-left: 3px solid #4CAF50;
+            background-color: #f9f9f9;
+        }
+        .hidden {
+            display: none;
+        }
+        #videoIdInput {
+            padding: 8px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HeyGen Video Viewer</h1>
+    
+    <div class="controls">
+        <input type="text" id="videoIdInput" placeholder="Enter your video ID" value="a0a90fc7f587465d84ce0ab6a4406242">
+        <button id="checkStatus">Check Status</button>
+    </div>
+    
+    <div id="status">
+        Status will appear here...
+    </div>
+    
+    <div class="video-container hidden" id="videoContainer">
+        <video id="videoPlayer" controls>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    
+    <script>
+        document.getElementById('checkStatus').addEventListener('click', checkVideoStatus);
+        
+        // For demonstration, we're going to use a proxy server setup
+        // In a production environment, you would handle API calls securely on your backend
+        async function checkVideoStatus() {
+            const videoId = document.getElementById('videoIdInput').value.trim();
+            if (!videoId) {
+                updateStatus('Please enter a valid video ID', 'error');
+                return;
+            }
+            
+            updateStatus('Checking video status...', 'info');
+            
+            try {
+                // In a real application, you would call your backend API which securely makes the request to HeyGen
+                // This is a placeholder for demonstration
+                const statusResponse = await fetch(`http://localhost:5000/check-status?videoId=${videoId}`);
+                const statusData = await statusResponse.json();
+                
+                if (statusData.error) {
+                    updateStatus(`Error: ${statusData.error.message || 'Unknown error'}`, 'error');
+                    return;
+                }
+                
+                if (statusData.data && statusData.data.status === 'completed') {
+                    updateStatus('Video is ready! Loading video player...', 'success');
+                    
+                    // Show video player and set source
+                    const videoContainer = document.getElementById('videoContainer');
+                    videoContainer.classList.remove('hidden');
+                    
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    videoPlayer.src = statusData.data.url || statusData.data.video_url;
+                    videoPlayer.load();
+                } else {
+                    updateStatus(`Video status: ${statusData.data ? statusData.data.status : 'Unknown'}. Please check again later.`, 'info');
+                }
+            } catch (error) {
+                console.error('Error checking video status:', error);
+                updateStatus('Error checking video status. See console for details.', 'error');
+            }
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            
+            // Reset classes
+            statusDiv.className = '';
+            
+            // Add appropriate styling based on message type
+            switch(type) {
+                case 'error':
+                    statusDiv.style.borderColor = '#f44336';
+                    statusDiv.style.backgroundColor = '#ffebee';
+                    break;
+                case 'success':
+                    statusDiv.style.borderColor = '#4CAF50';
+                    statusDiv.style.backgroundColor = '#e8f5e9';
+                    break;
+                default:
+                    statusDiv.style.borderColor = '#2196F3';
+                    statusDiv.style.backgroundColor = '#e3f2fd';
+            }
+        }
+        
+        // NOTE: For this UI to work, you need a backend server to make the actual API calls to HeyGen
+        // This can be implemented using the Python Flask server in server.py
+    </script>
+</body>
+</html>
